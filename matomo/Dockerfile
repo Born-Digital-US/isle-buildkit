@@ -39,7 +39,7 @@ RUN --mount=type=cache,id=matomo-downloads-${TARGETARCH},sharing=locked,target=/
         --strip \
         --dest /var/www/matomo/plugins/ExtraTools && \
     curl https://download.db-ip.com/free/dbip-city-lite-`date +%Y`-`date +%m`.mmdb.gz > /tmp/dbip.mmdb.gz && \
-	gzip -f /tmp/dbip.mmdb.gz && \
+	gunzip -f /tmp/dbip.mmdb.gz && \
 	mv /tmp/dbip.mmdb /var/www/matomo/misc/DBIP-City.mmdb && \
     cleanup.sh
 
