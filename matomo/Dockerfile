@@ -49,9 +49,9 @@ RUN --mount=type=cache,id=matomo-downloads-${TARGETARCH},sharing=locked,target=/
     # IP to City Lite - opensource monthly geolocation database
     # expires after three months - will be refreshed with latest upon every build
     # method 2 - pulls latest without hardcoded values
-    curl https://download.db-ip.com/free/dbip-city-lite-`date +%Y`-`date +%m`.mmdb.gz > /tmp/dbip.mmdb.gz
-	gzip -f /tmp/dbip.mmdb.gz
-	mv /tmp/dbip.mmdb /var/www/matomo/misc/DBIP-City.mmdb
+    curl https://download.db-ip.com/free/dbip-city-lite-`date +%Y`-`date +%m`.mmdb.gz > /tmp/dbip.mmdb.gz && \
+	gzip -f /tmp/dbip.mmdb.gz && \
+	mv /tmp/dbip.mmdb /var/www/matomo/misc/DBIP-City.mmdb && \
     # can remove this if method 2 is agreed upon.
     #wget "${IP_TO_CITY_URL}" -P /var/www/matomo/misc && \
     #gunzip -f /var/www/matomo/misc/"${IP_TO_CITY_FILE}" && \
