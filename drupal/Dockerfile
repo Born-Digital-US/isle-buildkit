@@ -2,24 +2,10 @@
 FROM nginx
 
 ARG TARGETARCH
-ARG DRUSH_VERSION="0.6.0"
-ARG DRUSH_FILE="drush.phar"
-ARG DRUSH_URL="https://github.com/drush-ops/drush-launcher/releases/download/${DRUSH_VERSION}/${DRUSH_FILE}"
-ARG DRUSH_SHA256="c3f32a800a2f18470b0010cd71c49e49ef5c087f8131eecfe9b686dc1f3f3d4e"
 
 EXPOSE 80
 
 WORKDIR /var/www/drupal
-
-# Platform agnostic does not require arch specific identifier.
-RUN --mount=type=cache,id=drupal-downloads-${TARGETARCH},sharing=locked,target=/opt/downloads \
-    download.sh \
-        --url "${DRUSH_URL}" \
-        --sha256 "${DRUSH_SHA256}" \
-    && \
-    cp "${DOWNLOAD_CACHE_DIRECTORY}/${DRUSH_FILE}" /usr/bin/drush && \
-    chmod a+x /usr/bin/drush && \
-    cleanup.sh
 
 # Platform specific does require arch specific identifier.
 RUN --mount=type=cache,id=drupal-apk-${TARGETARCH},sharing=locked,target=/var/cache/apk \
