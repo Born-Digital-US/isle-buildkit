@@ -1,6 +1,6 @@
 # Matomo
 
-Docker image for [Matomo] version 4.15.1
+Docker image for [Matomo] version 5.0.3
 
 Please refer to the [Matomo Documentation] for more in-depth information.
 
