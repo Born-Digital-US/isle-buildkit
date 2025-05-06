@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.5.1
-FROM islandora/nginx:4.0.14
+FROM nginx
 
 ARG TARGETARCH
 
