@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.5.1
-FROM nginx
+ARG TAG=7.0.21
+FROM islandora/nginx:${TAG}
 
 ARG TARGETARCH
 
@@ -17,7 +18,8 @@ EXPOSE 8000
 
 WORKDIR /var/www/matomo
 
-# Composer require statements are for supporting the Extra Tools plugin.
+# Composer require statements are for supporting the Extra Tools plugin (constraints from its composer.json).
+# --update-no-dev: Matomo's require-dev packages (php_codesniffer, xhprof, ...) don't belong in a production image.
 #
 # Platform agnostic does not require arch specific identifier.
 RUN --mount=type=cache,id=matomo-downloads-${TARGETARCH},sharing=locked,target=/opt/downloads \
@@ -29,9 +31,7 @@ RUN --mount=type=cache,id=matomo-downloads-${TARGETARCH},sharing=locked,target=/
     && \
     wget --directory-prefix=/var/www/matomo "https://raw.githubusercontent.com/matomo-org/matomo/${MATOMO_VERSION}/composer.json" && \
     wget --directory-prefix=/var/www/matomo "https://raw.githubusercontent.com/matomo-org/matomo/${MATOMO_VERSION}/composer.lock" && \
-    composer require -d /var/www/matomo symfony/yaml:~2.6.0 && \
-    composer require -d /var/www/matomo symfony/process:^5.4 && \
-    composer install -d /var/www/matomo && \
+    composer require -d /var/www/matomo --no-interaction --update-no-dev symfony/yaml:~5.4.21 symfony/process:^5.4 && \
     download.sh \
         --url "${EXTRA_TOOLS_URL}" \
         --sha256 "${EXTRA_TOOLS_SHA256}" \
@@ -59,5 +59,14 @@ ENV \
     MATOMO_USER_PASS=password
 
 COPY --link rootfs /
+
+# fastcgi_pass in default.conf.tmpl must match the base image's FPM socket. Fail the build if it doesn't.
+RUN grep -q 'fastcgi_pass unix:/run/php-fpm84/php-fpm84.sock;' /etc/confd/templates/default.conf.tmpl && \
+    grep -q '^listen = php-fpm84.sock$' /etc/confd/templates/www.conf.tmpl
+
+# The MariaDB client in buildkit >= 5 (11.x) requires SSL by default, and our mariadb service
+# (islandora/mariadb:2.0.8) has SSL disabled. Without this, execute-sql-file.sh / create-database.sh /
+# wait-for-database.sh / mysqldump fail, and the matomo-setup and install oneshots fail with them.
+RUN printf '[client]\nskip-ssl\n' > /etc/my.cnf.d/client.cnf
 
 RUN chown -R nginx:nginx /var/www
