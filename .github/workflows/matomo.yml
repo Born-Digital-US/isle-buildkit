@@ -30,6 +30,15 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # matomo/Dockerfile copies the php84 package repo from born-digital-us/php84-alpine-build, which is private.
+      # GITLAB_REGISTRY_* is a read_registry deploy token on that project.
+      - name: Login to GitLab registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: registry.gitlab.com
+          username: ${{ secrets.GITLAB_REGISTRY_USER }}
+          password: ${{ secrets.GITLAB_REGISTRY_TOKEN }}
+
       - name: Image tag
         id: tag
         run: echo "tag=${GITHUB_REF_NAME#matomo-}" >> "$GITHUB_OUTPUT"
