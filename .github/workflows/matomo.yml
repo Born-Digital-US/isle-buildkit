@@ -1,6 +1,6 @@
 name: Build and Push Matomo Image
 # Builds only matomo/ (FROM islandora/nginx) and pushes it for amd64 + arm64.
-# Runs on tags named matomo-<image tag>, e.g. matomo-5.3.2-7.0.21 → borndigital/matomo:5.3.2-7.0.21.
+# Runs on tags named matomo-<image tag>, e.g. matomo-5.3.2-7.0.23 → borndigital/matomo:5.3.2-7.0.23.
 # push.yml is removed on this branch so branch pushes don't rebuild every image.
 on:
   push:
@@ -29,15 +29,6 @@ jobs:
         with:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      # matomo/Dockerfile copies the php84 package repo from born-digital-us/php84-alpine-build, which is private.
-      # GITLAB_REGISTRY_* is a read_registry deploy token on that project.
-      - name: Login to GitLab registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: registry.gitlab.com
-          username: ${{ secrets.GITLAB_REGISTRY_USER }}
-          password: ${{ secrets.GITLAB_REGISTRY_TOKEN }}
 
       - name: Image tag
         id: tag

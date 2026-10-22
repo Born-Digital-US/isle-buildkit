@@ -1,11 +1,5 @@
 # syntax=docker/dockerfile:1.5.1
-ARG TAG=7.0.21
-
-# PHP 8.4.27 (CVE-2026-109618, CVE-2026-109619) ahead of Alpine and isle-buildkit: Alpine's own community/php84
-# package built by born-digital-us/php84-alpine-build (private; CI logs in with a deploy token). The image only
-# holds files, so one platform serves both target arches. Remove this stage and the re-pin step below once TAG
-# ships php84 8.4.27-r0 or newer.
-FROM --platform=linux/amd64 registry.gitlab.com/born-digital-us/php84-alpine-build:8.4.27-r0@sha256:d80f9c6b67a8e15c24eebad27a833d92c139b740f5dabb48f4e715199ade63ae AS php84repo
+ARG TAG=7.0.23
 
 FROM islandora/nginx:${TAG}
 
@@ -25,16 +19,10 @@ EXPOSE 8000
 
 WORKDIR /var/www/matomo
 
-# The base image pins every php84 package in /etc/apk/world, so a plain upgrade is a no-op: re-pin every package
-# built from the php84 source (php84-pecl-* are versioned separately). The packages are signed with a throwaway
-# key nothing trusts, hence --allow-untrusted; --repositories-file /dev/null makes this one command read only the
-# copied repo, so nothing else it installs skips verification. The PHP_VERSION check fails the build if it didn't take.
-ARG PHP84_VERSION=8.4.27-r0
-RUN --mount=type=bind,from=php84repo,source=/repo,target=/mnt/php84-repo \
-    apk add --no-cache --allow-untrusted --repositories-file /dev/null --repository /mnt/php84-repo \
-        $(apk info | grep -E '^php84(-|$)' | grep -v pecl | sed "s/\$/=${PHP84_VERSION}/") && \
-    [[ "$(php -r 'echo PHP_VERSION;')" == "${PHP84_VERSION%-r*}" ]] && \
-    cleanup.sh
+# Fail the build if TAG ships older PHP or nginx than the security fixes this image exists for:
+# PHP 8.4.27 (CVE-2026-109618, CVE-2026-109619) and nginx 1.30.6.
+RUN php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);' && \
+    [ "$(apk version -t "$(nginx -v 2>&1 | sed 's|.*/||')" 1.30.6)" != "<" ]
 
 # Composer require statements are for supporting the Extra Tools plugin (constraints from its composer.json).
 # --update-no-dev: Matomo's require-dev packages (php_codesniffer, xhprof, ...) don't belong in a production image.
